@@ -57,4 +57,9 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation("androidx.compose.material:material-icons-extended")
+    // Compose ViewModel desteği (ŞART)
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6")
+
+    // Zaten olması gerekenler (kontrol et)
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.6")
 }

@@ -1,19 +1,20 @@
 package com.erdem.tdp.design
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -21,299 +22,342 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
-// --- Özel Renk Paleti ---
-object AppColors {
-    val Background = Color(0xFFF4F7FA) // Çok açık gri-mavi arka plan
-    val PrimaryDark = Color(0xFF1A237E) // Koyu Mavi (Başlıklar için)
-    val PrimaryAccent = Color(0xFF3949AB) // Orta Mavi (Butonlar için)
-    val TextSecondary = Color(0xFF757575) // Gri metinler
-    val CardSurface = Color.White
-
-    // Durum Renkleri (Daha modern tonlar)
-    val HeartRed = Color(0xFFE91E63)
-    val RedGradientStart = Color(0xFFFF8A80)
-    val RedGradientEnd = Color(0xFFD32F2F)
-    val SuccessGreen = Color(0xFF00C853)
-    val WarningOrange = Color(0xFFFFAB00)
-    val InfoBlue = Color(0xFF2962FF)
-    val NeutralGray = Color(0xFF607D8B)
-}
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 /* ---------------------------------------------------
-   DASHBOARD SCREEN (YENİLENMİŞ)
+   RENK PALETİ - DURUMA GÖRE
 --------------------------------------------------- */
+private val ColorNormal = Color(0xFF2196F3)      // Mavi (Her şey yolunda)
+private val ColorWarning = Color(0xFFFF9800)     // Turuncu (Nabız yüksek/Geri sayım)
+private val ColorCritical = Color(0xFFD32F2F)    // Kırmızı (Düştü/Panik)
+private val ColorIdle = Color(0xFF9E9E9E)        // Gri (Boşta)
 
-@Composable
-fun DashboardScreen() {
-    // Ekranın kaydırılabilir olması için ScrollState ekliyoruz
-    val scrollState = rememberScrollState()
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(AppColors.Background) // Tüm arka plan rengi
-            .padding(horizontal = 24.dp, vertical = 16.dp)
-            .verticalScroll(scrollState),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
-    ) {
-
-        HeaderSection()
-
-        HeartRateCardStylish(heartRate = 78)
-
-        Text(
-            text = "Cihaz Durumu",
-            fontSize = 18.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = AppColors.PrimaryDark,
-            modifier = Modifier.padding(top = 8.dp)
-        )
-
-        StatusGridStylish()
-
-        Spacer(modifier = Modifier.weight(1f)) // Butonu alta itmek için
-
-        Button(
-            onClick = { /* Ayarlar */ },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = AppColors.PrimaryAccent
-            ),
-            elevation = ButtonDefaults.buttonElevation(8.dp)
-        ) {
-            Icon(Icons.Outlined.Settings, contentDescription = null)
-            Spacer(Modifier.width(8.dp))
-            Text("Ayarlar", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-        }
-        Spacer(Modifier.height(16.dp)) // Alt boşluk
-    }
-}
+private val BackgroundGlass = Color(0xFFFFFFFF).copy(alpha = 0.8f)
 
 /* ---------------------------------------------------
-   HEADER (YENİLENMİŞ)
+   DASHBOARD SCREEN (ANA EKRAN)
 --------------------------------------------------- */
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HeaderSection() {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column {
-            Text(
-                text = "Hoş Geldiniz,",
-                fontSize = 16.sp,
-                color = AppColors.TextSecondary,
-                fontWeight = FontWeight.Medium
-            )
-            Text(
-                text = "Gerçek Zamanlı İzleme",
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                color = AppColors.PrimaryDark
-            )
-        }
-        // Profil resmi veya ikon için yer tutucu
-        Box(
-            modifier = Modifier
-                .size(50.dp)
-                .clip(CircleShape)
-                .background(AppColors.PrimaryAccent.copy(alpha = 0.1f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                Icons.Default.Person,
-                contentDescription = "Profil",
-                tint = AppColors.PrimaryAccent,
-                modifier = Modifier.size(28.dp)
-            )
-        }
-    }
-}
-
-/* ---------------------------------------------------
-   HEART RATE (HERO CARD - YENİLENMİŞ)
---------------------------------------------------- */
-
-@Composable
-fun HeartRateCardStylish(heartRate: Int) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(28.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 10.dp),
-    ) {
-        // Gradyan Arka Plan
-        Box(
-            modifier = Modifier
-                .background(
-                    Brush.horizontalGradient(
-                        colors = listOf(AppColors.RedGradientStart, AppColors.RedGradientEnd)
-                    )
-                )
-                .padding(28.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column {
-                    Text(
-                        text = "Canlı Nabız",
-                        fontSize = 16.sp,
-                        color = Color.White.copy(alpha = 0.9f),
-                        fontWeight = FontWeight.Medium
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(verticalAlignment = Alignment.Bottom) {
-                        Text(
-                            text = "$heartRate",
-                            fontSize = 48.sp, // Sayıyı çok daha büyük yaptık
-                            fontWeight = FontWeight.ExtraBold,
-                            color = Color.White
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "bpm",
-                            fontSize = 18.sp,
-                            color = Color.White.copy(alpha = 0.9f),
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
-                    }
-                }
-
-                // Kalp İkonu için süslü bir kapsayıcı
-                Box(
-                    modifier = Modifier
-                        .size(64.dp)
-                        .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.2f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Favorite,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(36.dp)
-                    )
-                }
-            }
-        }
-    }
-}
-
-/* ---------------------------------------------------
-   STATUS GRID (YENİLENMİŞ)
---------------------------------------------------- */
-
-@Composable
-fun StatusGridStylish() {
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            // Modifier.weight(1f) kullanarak yan yana eşit alan kaplamalarını sağlıyoruz
-            StatusItemStylish(
-                title = "Bluetooth",
-                value = "Bağlı",
-                icon = Icons.Default.BluetoothConnected, // Daha uygun ikon
-                accentColor = AppColors.SuccessGreen,
-                modifier = Modifier.weight(1f)
-            )
-            StatusItemStylish(
-                title = "Hareket",
-                value = "Normal",
-                icon = Icons.Default.DirectionsWalk,
-                accentColor = AppColors.WarningOrange,
-                modifier = Modifier.weight(1f)
-            )
-        }
-
-        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            StatusItemStylish(
-                title = "Güvenlik",
-                value = "Güvenli",
-                icon = Icons.Default.Shield, // Daha modern ikon
-                accentColor = AppColors.InfoBlue,
-                modifier = Modifier.weight(1f)
-            )
-            StatusItemStylish(
-                title = "Alarm",
-                value = "Pasif",
-                icon = Icons.Default.NotificationsOff, // Daha uygun ikon
-                accentColor = AppColors.NeutralGray,
-                modifier = Modifier.weight(1f)
-            )
-        }
-    }
-}
-
-/* ---------------------------------------------------
-   STATUS ITEM (YENİLENMİŞ)
---------------------------------------------------- */
-
-@Composable
-fun StatusItemStylish(
-    title: String,
-    value: String,
-    icon: ImageVector,
-    accentColor: Color,
-    modifier: Modifier = Modifier
+fun DashboardScreen(
+    viewModel: HeartRateViewModel = viewModel(),
+    userName: String = "Kullanıcı", // Varsayılan değer
+    onSettingsClick: () -> Unit = {} // Tıklama işlevi
 ) {
-    Card(
-        modifier = modifier.height(130.dp),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = AppColors.CardSurface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+
+    // ViewModel'dan gelen verileri dinliyoruz
+    val heartRate by viewModel.heartRate.collectAsState()
+    val spo2 by viewModel.spo2.collectAsState()
+    val status by viewModel.systemStatus.collectAsState()
+    val fallTimer by viewModel.fallCountdown.collectAsState()
+
+    // Duruma göre ana rengi belirle (Animasyonlu geçiş)
+    val mainColor by animateColorAsState(
+        targetValue = when (status) {
+            TrackingStatus.NORMAL -> ColorNormal
+            TrackingStatus.PULSE_ALERT, TrackingStatus.WARNING_FALL -> ColorWarning
+            TrackingStatus.ALARM_FALL, TrackingStatus.PANIC -> ColorCritical
+            TrackingStatus.IDLE -> ColorIdle
+        },
+        animationSpec = tween(500), label = "colorAnim"
+    )
+
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = Color(0xFFF5F9FF) // Genel arka plan
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.SpaceBetween,
-            horizontalAlignment = Alignment.Start
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // İkonu renkli bir daire içine alıyoruz
-            Box(
+
+            // Header (İsim Bilgisi Buraya Gidiyor)
+            HeaderSection(userName = userName, status = status, color = mainColor)
+
+            // Orta Daire: Duruma göre Nabız veya Geri Sayım gösterir
+            DynamicCircularCard(
+                heartRate = heartRate,
+                fallTimer = fallTimer,
+                status = status,
+                mainColor = mainColor
+            )
+
+            // Alt Bilgi Kartları
+            StatusGrid(
+                status = status,
+                spo2 = spo2,
+                mainColor = mainColor
+            )
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            // Ayarlar Butonu (Tıklama Olayı Bağlandı)
+            FilledTonalButton(
+                onClick = onSettingsClick,
                 modifier = Modifier
-                    .size(42.dp)
-                    .clip(CircleShape)
-                    .background(accentColor.copy(alpha = 0.15f)),
-                contentAlignment = Alignment.Center
+                    .fillMaxWidth(0.8f)
+                    .height(56.dp),
+                shape = RoundedCornerShape(20.dp),
+                colors = ButtonDefaults.filledTonalButtonColors(
+                    containerColor = mainColor.copy(alpha = 0.15f),
+                    contentColor = mainColor
+                )
             ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = accentColor,
-                    modifier = Modifier.size(24.dp)
-                )
+                Icon(Icons.Default.Settings, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("Sistem Ayarları", fontSize = 17.sp, fontWeight = FontWeight.Medium)
             }
+        }
+    }
+}
 
-            Spacer(modifier = Modifier.height(12.dp))
 
-            Column {
-                Text(
-                    text = title,
-                    fontSize = 13.sp,
-                    color = AppColors.TextSecondary,
-                    fontWeight = FontWeight.Medium
+/* ---------------------------------------------------
+   HEADER
+--------------------------------------------------- */
+
+@Composable
+fun HeaderSection(userName: String, status: TrackingStatus, color: Color) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Text("Hoş geldiniz,", fontSize = 16.sp, color = Color.Gray)
+        // Dinamik İsim Gösterimi
+        Text(userName, fontSize = 28.sp, fontWeight = FontWeight.Bold)
+
+        // Durum Metni
+        val statusText = when (status) {
+            TrackingStatus.NORMAL -> "Sistem Normal"
+            TrackingStatus.IDLE -> "Sensör Beklemede"
+            TrackingStatus.WARNING_FALL -> "DÜŞME ALGILANIYOR..."
+            TrackingStatus.ALARM_FALL -> "!!! DÜŞME ALARMI !!!"
+            TrackingStatus.PANIC -> "!!! ACİL YARDIM !!!"
+            TrackingStatus.PULSE_ALERT -> "Nabız Uyarısı"
+        }
+
+        Text(
+            text = statusText,
+            fontSize = 18.sp,
+            color = color,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+
+/* ---------------------------------------------------
+   DİNAMİK ORTA KART (NABIZ / GERİ SAYIM)
+--------------------------------------------------- */
+
+@Composable
+fun DynamicCircularCard(
+    heartRate: Int,
+    fallTimer: Int,
+    status: TrackingStatus,
+    mainColor: Color
+) {
+    // Düşme şüphesi varsa (WARNING_FALL) geri sayımı göster, yoksa nabzı göster
+    val isCountingDown = status == TrackingStatus.WARNING_FALL
+
+    val displayValue = if (isCountingDown) fallTimer.toString() else heartRate.toString()
+    val displayUnit = if (isCountingDown) "Saniye" else "bpm"
+    val subText = when (status) {
+        TrackingStatus.WARNING_FALL -> "Müdahale Bekleniyor"
+        TrackingStatus.ALARM_FALL -> "YARDIM ÇAĞRILIYOR"
+        TrackingStatus.PANIC -> "BUTONA BASILDI"
+        TrackingStatus.IDLE -> "Parmağınızı Yerleştirin"
+        TrackingStatus.PULSE_ALERT -> "Riskli Seviye"
+        else -> "Normal Aralıkta"
+    }
+
+    val icon =
+        if (isCountingDown || status == TrackingStatus.ALARM_FALL) Icons.Default.Warning else Icons.Default.Favorite
+
+    Card(
+        modifier = Modifier.size(280.dp),
+        shape = CircleShape,
+        elevation = CardDefaults.cardElevation(defaultElevation = 12.dp),
+        colors = CardDefaults.cardColors(containerColor = BackgroundGlass)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .border(4.dp, mainColor.copy(alpha = 0.3f), CircleShape)
+                .background(
+                    Brush.radialGradient(
+                        colors = listOf(mainColor.copy(alpha = 0.1f), Color.White)
+                    )
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+
+                // İkon (Kalp veya Ünlem)
+                Icon(
+                    icon,
+                    contentDescription = null,
+                    tint = mainColor,
+                    modifier = Modifier.size(56.dp)
                 )
+
+                Spacer(Modifier.height(8.dp))
+
+                // Ana Sayı (Nabız veya Sayaç)
                 Text(
-                    text = value,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = AppColors.PrimaryDark
+                    text = displayValue,
+                    fontSize = 72.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = mainColor
+                )
+
+                // Birim
+                Text(displayUnit, fontSize = 20.sp, color = Color.Gray)
+
+                Spacer(Modifier.height(8.dp))
+
+                // Alt Açıklama
+                Text(
+                    text = subText,
+                    fontSize = 16.sp,
+                    color = mainColor,
+                    fontWeight = FontWeight.Bold
                 )
             }
         }
     }
 }
 
-@Preview(showBackground = true, heightDp = 800)
+/* ---------------------------------------------------
+   STATUS GRID (DURUM KARTLARI)
+--------------------------------------------------- */
+
 @Composable
-fun PreviewStylish() {
+fun StatusGrid(status: TrackingStatus, spo2: Int, mainColor: Color) {
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+
+        // 1. SATIR
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            // Oksijen Kartı
+            StatusCard(
+                modifier = Modifier.weight(1f),
+                title = "SpO2 (Oksijen)",
+                statusValue = "%$spo2",
+                icon = Icons.Default.Air,
+                color = Color(0xFF00BCD4) // Cyan
+            )
+
+            // Hareket Durumu
+            val moveText = if (status == TrackingStatus.ALARM_FALL) "Düştü!" else "Normal"
+            val moveColor =
+                if (status == TrackingStatus.ALARM_FALL) ColorCritical else Color(0xFF4CAF50)
+
+            StatusCard(
+                modifier = Modifier.weight(1f),
+                title = "Hareket",
+                statusValue = moveText,
+                icon = Icons.Default.DirectionsWalk,
+                color = moveColor
+            )
+        }
+
+        // 2. SATIR
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+
+            // Alarm Durumu
+            val alarmText =
+                if (status == TrackingStatus.ALARM_FALL || status == TrackingStatus.PANIC) "AKTİF" else "Pasif"
+            val alarmColorIcon =
+                if (status == TrackingStatus.ALARM_FALL || status == TrackingStatus.PANIC) ColorCritical else Color.Gray
+
+            StatusCard(
+                modifier = Modifier.weight(1f),
+                title = "Acil Durum Alarmı",
+                statusValue = alarmText,
+                icon = if (alarmText == "AKTİF") Icons.Default.NotificationsActive else Icons.Default.NotificationsOff,
+                color = alarmColorIcon
+            )
+
+            // Bağlantı (Varsayılan bağlı kabul ediyoruz veri geliyorsa)
+            StatusCard(
+                modifier = Modifier.weight(1f),
+                title = "Bluetooth",
+                statusValue = "Bağlı",
+                icon = Icons.Default.BluetoothConnected,
+                color = Color(0xFF3F51B5)
+            )
+        }
+    }
+}
+
+/* ---------------------------------------------------
+   TEKİL KART BİLEŞENİ
+--------------------------------------------------- */
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun StatusCard(
+    modifier: Modifier = Modifier,
+    title: String,
+    statusValue: String,
+    icon: ImageVector,
+    color: Color
+) {
+    Card(
+        modifier = modifier.height(110.dp),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // İkon Kutusu
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .background(color.copy(alpha = 0.1f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(icon, contentDescription = null, tint = color)
+            }
+
+            Spacer(Modifier.width(12.dp))
+
+            // Metinler
+            Column {
+                Text(title, fontSize = 12.sp, color = Color.Gray)
+                Text(
+                    statusValue,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
+                )
+            }
+        }
+    }
+}
+
+// Önizleme
+@Preview(showBackground = true)
+@Composable
+fun PreviewDashboardV2() {
     MaterialTheme {
-        DashboardScreen()
+        DashboardScreen(
+            userName = "Ali Veli",
+            onSettingsClick = {}
+        )
     }
 }
