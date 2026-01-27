@@ -10,9 +10,10 @@ class UserPreferences(context: Context) {
         get() = prefs.getString("USER_NAME", "Kullanıcı") ?: "Kullanıcı"
         set(value) = prefs.edit().putString("USER_NAME", value).apply()
 
-    var userEmail: String
-        get() = prefs.getString("USER_EMAIL", "") ?: ""
-        set(value) = prefs.edit().putString("USER_EMAIL", value).apply()
+    // Email yerine Acil Durum Telefon Numarası
+    var emergencyPhone: String
+        get() = prefs.getString("EMERGENCY_PHONE", "") ?: ""
+        set(value) = prefs.edit().putString("EMERGENCY_PHONE", value).apply()
 
     var highBpmLimit: String
         get() = prefs.getString("HIGH_BPM", "120") ?: "120"

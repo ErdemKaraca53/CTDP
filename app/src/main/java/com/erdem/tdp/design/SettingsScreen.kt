@@ -1,7 +1,6 @@
 package com.erdem.tdp.design
 
 import android.widget.Toast
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -9,13 +8,12 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -35,7 +33,7 @@ fun SettingsScreen(
 
     // State'ler (Varsayılan değerleri hafızadan çeker)
     var name by remember { mutableStateOf(prefs.userName) }
-    var email by remember { mutableStateOf(prefs.userEmail) }
+    var phone by remember { mutableStateOf(prefs.emergencyPhone) }
     var highBpm by remember { mutableStateOf(prefs.highBpmLimit) }
     var lowBpm by remember { mutableStateOf(prefs.lowBpmLimit) }
 
@@ -74,17 +72,19 @@ fun SettingsScreen(
                 shape = RoundedCornerShape(12.dp)
             )
 
+            // TELEFON NUMARASI ALANI
             OutlinedTextField(
-                value = email,
-                onValueChange = { email = it },
-                label = { Text("E-posta Adresi") },
-                leadingIcon = { Icon(Icons.Default.Email, null) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                value = phone,
+                onValueChange = { phone = it },
+                label = { Text("Acil Durum Telefonu") },
+                placeholder = { Text("05XXXXXXXXX") },
+                leadingIcon = { Icon(Icons.Default.Phone, null) },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
             )
 
-            Divider(modifier = Modifier.padding(vertical = 8.dp))
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
             // --- GÜVENLİK AYARLARI ---
             Text("Güvenlik Limitleri (Nabız)", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFFD32F2F))
@@ -119,14 +119,14 @@ fun SettingsScreen(
                 onClick = {
                     // 1. Verileri Telefona Kaydet
                     prefs.userName = name
-                    prefs.userEmail = email
+                    prefs.emergencyPhone = phone
                     prefs.highBpmLimit = highBpm
                     prefs.lowBpmLimit = lowBpm
 
                     // 2. Arduino'ya Göndermek İçin Callback Çağır
                     onSaveClick(highBpm, lowBpm)
 
-                    Toast.makeText(context, "Ayarlar Kaydedildi ve Cihaza Gönderildi!", Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, "Ayarlar Kaydedildi!", Toast.LENGTH_LONG).show()
                 },
                 modifier = Modifier
                     .fillMaxWidth()
